@@ -1,44 +1,70 @@
 import { useEffect, useState } from "react";
+
+import {
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut
+} from "firebase/auth";
+
+import { auth } from "./firebase";
 import Fiscal from "./pages/Fiscal.jsx";
 import Comando from "./pages/Comando.jsx";
 import Admin from "./pages/Admin.jsx";
 
-const CODIGO_FISCAL = "re2026";
-const CODIGO_COMANDO = "comando2026";
-const CODIGO_ADMIN = "admin2026";
-
 export default function App() {
-  const [codigo, setCodigo] = useState("");
-  const [rol, setRol] = useState(localStorage.getItem("cieu_rol") || "");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  function ingresar() {
-   const limpio = codigo.trim().toLowerCase();
+  const [rol, setRol] = useState("");
 
-    if (limpio === CODIGO_FISCAL) {
-      localStorage.setItem("cieu_rol", "fiscal");
-      setRol("fiscal");
-      return;
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        setRol("");
+        return;
+      }
+
+      if (user.email === "fiscal@re.com") {
+        setRol("fiscal");
+      } else if (user.email === "comando@re.com") {
+        setRol("comando");
+      } else if (user.email === "admin@re.com") {
+        setRol("admin");
+      }
+    });
+
+    return () => unsub();
+  }, []);
+
+  async function ingresar() {
+    try {
+      const credenciales = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      const mail = credenciales.user.email;
+
+      if (mail === "fiscal@re.com") {
+        setRol("fiscal");
+      } else if (mail === "comando@re.com") {
+        setRol("comando");
+      } else if (mail === "admin@re.com") {
+        setRol("admin");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Credenciales incorrectas.");
     }
-
-    if (limpio === CODIGO_COMANDO) {
-      localStorage.setItem("cieu_rol", "comando");
-      setRol("comando");
-      return;
-    }
-
-    if (limpio === CODIGO_ADMIN) {
-      localStorage.setItem("cieu_rol", "admin");
-      setRol("admin");
-      return;
-    }
-
-    alert("Código incorrecto.");
   }
 
-  function salir() {
-    localStorage.removeItem("cieu_rol");
+  async function salir() {
+    await signOut(auth);
+
     setRol("");
-    setCodigo("");
+    setEmail("");
+    setPassword("");
   }
 
   if (!rol) {
@@ -46,17 +72,30 @@ export default function App() {
       <main className="login-shell">
         <section className="login-card">
           <div className="status-badge">RE · SISTEMA EN LÍNEA</div>
+
           <h1>RE · Comando Electoral UNCuyo</h1>
+
           <p>
-            Ingreso restringido para fiscales, comando electoral y administración.
+            Ingreso restringido para fiscales, comando electoral y
+            administración.
           </p>
 
-          <label>Código de acceso</label>
+          <label>Email</label>
+
           <input
-            value={codigo}
-            onChange={(e) => setCodigo(e.target.value)}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Ingresar email"
+          />
+
+          <label>Contraseña</label>
+
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && ingresar()}
-            placeholder="Ingresar código"
+            placeholder="Ingresar contraseña"
           />
 
           <button className="primary" onClick={ingresar}>
@@ -64,8 +103,8 @@ export default function App() {
           </button>
 
           <p className="mini">
-           Códigos iniciales: re2026 fiscal · comando2026 comando · admin2026 admin.
-            Después los cambiamos por login real.
+            Acceso interno restringido. Las credenciales serán reemplazadas por
+            autenticación real.
           </p>
         </section>
       </main>
@@ -73,54 +112,47 @@ export default function App() {
   }
 
   return (
-   <>
-  <header>
+    <>
+      <header>
+        <div className="top-live-bar">
+          <div className="live-left">
+            <span className="live-dot"></span>
+            SISTEMA OPERATIVO RE · ACTIVO
+          </div>
 
-    <div className="top-live-bar">
-      <div className="live-left">
-        <span className="live-dot"></span>
-        SISTEMA OPERATIVO RE · ACTIVO
-      </div>
+          <div className="live-right">
+            <div className="live-chip">
+              ⚡ FLUJO: <span id="rpmCounter">0</span> reportes/min
+            </div>
 
-      <div className="live-right">
-        <div className="live-chip">
-          ⚡ FLUJO: <span id="rpmCounter">0</span> reportes/min
+            <div className="live-chip">
+              🕒 <LiveClock /> · MODO {rol.toUpperCase()}
+            </div>
+          </div>
         </div>
 
-        <div className="live-chip">
-          🕒 <LiveClock /> · MODO {rol.toUpperCase()}
+        <div className="brand">
+          <div>
+            <h1>RE · Comando Electoral UNCuyo</h1>
+
+            <div className="subtitle">
+              Trayectoria y Renovación · {rol.toUpperCase()}
+            </div>
+          </div>
+
+          <div className="top-actions">
+            <button onClick={() => setRol("fiscal")}>Fiscal</button>
+
+            <button onClick={() => setRol("comando")}>Comando</button>
+
+            <button onClick={() => setRol("admin")}>Admin</button>
+
+            <button className="danger" onClick={salir}>
+              Salir
+            </button>
+          </div>
         </div>
-      </div>
-    </div>
-
-    <div className="brand">
-      <div>
-        <h1>RE · Comando Electoral UNCuyo</h1>
-
-        <div className="subtitle">
-          Trayectoria y Renovación · {rol.toUpperCase()}
-        </div>
-      </div>
-
-    <div className="top-actions">
-      <button onClick={() => setRol("fiscal")}>
-        Fiscal
-      </button>
-
-      <button onClick={() => setRol("comando")}>
-        Comando
-      </button>
-
-      <button onClick={() => setRol("admin")}>
-        Admin
-      </button>
-
-      <button className="danger" onClick={salir}>
-        Salir
-      </button>
-    </div>
-  </div>
-</header>
+      </header>
 
       {rol === "fiscal" && <Fiscal />}
       {rol === "comando" && <Comando />}
@@ -128,16 +160,13 @@ export default function App() {
     </>
   );
 }
+
 function LiveClock() {
-  const [hora, setHora] = useState(
-    new Date().toLocaleTimeString("es-AR")
-  );
+  const [hora, setHora] = useState(new Date().toLocaleTimeString("es-AR"));
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setHora(
-        new Date().toLocaleTimeString("es-AR")
-      );
+      setHora(new Date().toLocaleTimeString("es-AR"));
     }, 1000);
 
     return () => clearInterval(interval);
