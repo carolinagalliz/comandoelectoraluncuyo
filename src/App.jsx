@@ -3,16 +3,16 @@ import Fiscal from "./pages/Fiscal.jsx";
 import Comando from "./pages/Comando.jsx";
 import Admin from "./pages/Admin.jsx";
 
-const CODIGO_FISCAL = "RE2026";
-const CODIGO_COMANDO = "TOMAS2026";
-const CODIGO_ADMIN = "ADMIN2026";
+const CODIGO_FISCAL = "re2026";
+const CODIGO_COMANDO = "comando2026";
+const CODIGO_ADMIN = "admin2026";
 
 export default function App() {
   const [codigo, setCodigo] = useState("");
   const [rol, setRol] = useState(localStorage.getItem("cieu_rol") || "");
 
   function ingresar() {
-    const limpio = codigo.trim();
+   const limpio = codigo.trim().toLowerCase();
 
     if (limpio === CODIGO_FISCAL) {
       localStorage.setItem("cieu_rol", "fiscal");
@@ -64,7 +64,7 @@ export default function App() {
           </button>
 
           <p className="mini">
-            Códigos iniciales: RE2026 fiscal · TOMAS2026 comando · ADMIN2026 admin.
+           Códigos iniciales: re2026 fiscal · comando2026 comando · admin2026 admin.
             Después los cambiamos por login real.
           </p>
         </section>
